@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
 import { auth, db } from "./config.js";
-import { collection, addDoc, getDocs, Timestamp, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js";
+import { collection, addDoc, getDocs, Timestamp, orderBy, query, where, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-firestore.js";
 
 const form = document.querySelector('#form');
 const title = document.querySelector('#title');
@@ -62,7 +62,7 @@ getDataFromFirestore();
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
     try {
-        const postObj ={
+        const postObj = {
             title: title.value,
             description: description.value,
             uid: auth.currentUser.uid, // Corrected 'Uid' to 'uid'
@@ -99,19 +99,41 @@ function renderPost() {
     const deleteButtons = document.querySelectorAll('.delete');
     deleteButtons.forEach((button) => {
         button.addEventListener('click', async () => {
-            const docId = button.dataset.id;
-            // Implement delete functionality using docId
-            // Example: await deleteDoc(doc(db, "posts", docId));
+            const docIdToDelete = button.dataset.id;
+            await deleteDoc(doc(db, "posts", docIdToDelete))
+                .then(() => {
+                    console.log('Post deleted');
+                    arr = arr.filter((item) => item.docId !== docIdToDelete);
+                    renderPost();
+                })
+                .catch((error) => {
+                    console.error('Error deleting document: ', error);
+                });
         });
     });
 
+    //edit function
+
     const updateButtons = document.querySelectorAll('.update');
-    updateButtons.forEach((button) => {
+    updateButtons.forEach((button, index) => {
         button.addEventListener('click', async () => {
-            const docId = button.dataset.id;
-            // Implement update functionality using docId
-            // Example: window.location = `edit.html?id=${docId}`;
+            const updateTitle = prompt('Enter new Title', arr[index].title);
+            const updateDescription = prompt('Enter new Description', arr[index].description);
+
+            if (updateTitle !== null && updateTitle !== '' && updateDescription !== null && updateDescription !== '') {
+                const docIdToUpdate = arr[index].docId;
+                try {
+                    await updateDoc(doc(db, "posts", docIdToUpdate), {
+                        title: updateTitle,
+                        description: updateDescription
+                    });
+                    arr[index].title = updateTitle;
+                    arr[index].description = updateDescription;
+                    renderPost();
+                } catch (error) {
+                    console.error("Error updating document: ", error);
+                }
+            }
         });
     });
 }
-
