@@ -44,9 +44,31 @@ signout.addEventListener('click', () => {
 //get data from firestore
 
 
-let arr = [];
+let arr = []
 
-async function getDataFromFirestore() {
+function renderPost() {
+    card.innerHTML = ''
+    arr.map((item) => {
+        card.innerHTML += `
+    <div class="card">
+    <div class="card-body">
+        <p class="card-text"><span class="h4">Title:</span>${item.title}</p>
+        <p><span class="h4">Description:</span> ${item.description}</p>
+        <button type="button" id="delete" class="btn btn-danger">Delete</button>
+        <button type="button" id="update" class="btn btn-info">Edit</button>
+    </div>
+    
+</div>`
+    })
+
+    const del = document.querySelectorAll('#delete');
+    const update = document.querySelectorAll('#update');
+}
+
+
+
+
+async function getDataFormFirestore() {
     arr.length = 0;
     const q = query(collection(db, "posts"), orderBy('postDate', 'desc'));
     const querySnapshot = await getDocs(q);
@@ -57,7 +79,9 @@ async function getDataFromFirestore() {
     console.log(arr);
     renderPost();
 }
-getDataFromFirestore();
+getDataFormFirestore()
+
+//post data on firestore
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -65,53 +89,22 @@ form.addEventListener('submit', async (event) => {
         const postObj ={
             title: title.value,
             description: description.value,
-            uid: auth.currentUser.uid, // Corrected 'Uid' to 'uid'
+            Uid: auth.currentUser.uid,
             postDate: Timestamp.fromDate(new Date())
-        };
-        const docRef = await addDoc(collection(db, "posts"), postObj);
+        }
+        const docRef = await addDoc(collection(db, "posts"), postObj );
+            
+       
         console.log("Document written with ID: ", docRef.id);
-        postObj.docId = docRef.id; // Corrected referencing docRef.id
-        arr = [postObj, ...arr];
+        postObj.docId = doc.id;
+        arr=[postObj,...arr];
         console.log(arr);
         renderPost();
-        title.value = '';
-        description.value = '';
+
+
     } catch (e) {
         console.error("Error adding document: ", e);
     }
-});
 
-// Function to render posts
-function renderPost() {
-    card.innerHTML = '';
-    arr.forEach((item) => {
-        card.innerHTML += `
-            <div class="card">
-                <div class="card-body">
-                    <p class="card-text"><span class="h4">Title:</span>${item.title}</p>
-                    <p><span class="h4">Description:</span> ${item.description}</p>
-                    <button type="button" data-id="${item.docId}" class="delete btn btn-danger">Delete</button>
-                    <button type="button" data-id="${item.docId}" class="update btn btn-info">Edit</button>
-                </div>
-            </div>`;
-    });
 
-    const deleteButtons = document.querySelectorAll('.delete');
-    deleteButtons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const docId = button.dataset.id;
-            // Implement delete functionality using docId
-            // Example: await deleteDoc(doc(db, "posts", docId));
-        });
-    });
-
-    const updateButtons = document.querySelectorAll('.update');
-    updateButtons.forEach((button) => {
-        button.addEventListener('click', async () => {
-            const docId = button.dataset.id;
-            // Implement update functionality using docId
-            // Example: window.location = `edit.html?id=${docId}`;
-        });
-    });
-}
-
+})
